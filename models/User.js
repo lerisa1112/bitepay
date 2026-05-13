@@ -13,6 +13,16 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    canteenName: {
+  type: String,
+},
+
+vendorStatus: {
+  type: String,
+  enum: ["Pending Review", "Approved", "Rejected"],
+  default: "Pending Review",
+},
+
     isApproved: { type: Boolean, default: false },
 
     // 🔐 RESET PASSWORD

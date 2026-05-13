@@ -37,6 +37,31 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use(
+  "/api/admin-dashboard",
+  require("./routes/adminDashboardRoutes")
+);
+
+app.use(
+  "/api/admin",
+  require("./routes/adminUserRoutes")
+);
+
+app.use(
+  "/api/admin",
+  require("./routes/adminVendorRoutes")
+);
+
+app.use(
+  "/api/admin",
+  require("./routes/adminOrderRoutes")
+);
+
+app.use(
+  "/api/admin",
+  require("./routes/adminWalletRoutes")
+);
+
 // Error handling middleware (basic)
 app.use((err, req, res, next) => {
   console.error(err.stack);
