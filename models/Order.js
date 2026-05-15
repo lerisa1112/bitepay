@@ -2,77 +2,66 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    // 👨‍🎓 USER
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // 🏪 VENDOR
     vendor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // 🛒 ITEMS
+    orderId: {
+      type: String,
+      required: true,
+    },
+
     items: [
       {
-        name: String,
+        foodName: String,
+        quantity: Number,
         price: Number,
-        qty: Number,
       },
     ],
 
-    // 💰 TOTAL AMOUNT
     totalAmount: {
       type: Number,
       required: true,
     },
 
-    // 📦 ORDER STATUS
-    status: {
+    paymentMethod: {
       type: String,
-      enum: [
-        "Placed",
-        "Accepted",
-        "Preparing",
-        "Ready",
-        "Completed",
-        "Cancelled",
-      ],
-      default: "Placed",
+      default: "Wallet",
     },
 
-    // 💳 PAYMENT STATUS
-    paymentStatus: {
+    orderStatus: {
       type: String,
-      enum: ["Pending", "Paid", "Refunded"],
-      default: "Paid",
+      enum: ["Pending", "Preparing", "Ready", "Completed"],
+      default: "Pending",
     },
 
-    // ⏰ PICKUP TIME (IMPORTANT)
+    // 🍔 NEW FIELDS
+    menuName: {
+      type: String,
+      default: "",
+    },
+
+    readyTime: {
+      type: Number,
+      default: 0,
+    },
+
     pickupTime: {
       type: String,
-      required: true,
+      default: "",
     },
 
-    // 📍 SLOT ID (QUEUE SYSTEM)
-    pickupSlot: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PickupSlot",
-    },
-
-    // 📱 QR CODE (for pickup verification)
     qrCode: {
       type: String,
-    },
-
-    // 🔁 CANCEL FLAG
-    isCancelled: {
-      type: Boolean,
-      default: false,
+      default: "",
     },
   },
   { timestamps: true }

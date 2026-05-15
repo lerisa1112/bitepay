@@ -1,15 +1,13 @@
 const Wallet = require("../models/Wallet");
-const User = require("../models/User");
-const Notification = require("../models/Notification");
 
-// 💰 CREATE / GET WALLET
+// ===============================
+// GET WALLET (BALANCE + HISTORY)
+// ===============================
 const getWallet = async (req, res) => {
   try {
-    let wallet = await Wallet.findOne({
-      user: req.user._id,
-    });
+    let wallet = await Wallet.findOne({ user: req.user._id });
 
-    // create wallet if not exists
+    // AUTO CREATE IF NOT EXISTS (IMPORTANT FIX)
     if (!wallet) {
       wallet = await Wallet.create({
         user: req.user._id,
@@ -18,24 +16,37 @@ const getWallet = async (req, res) => {
       });
     }
 
-    res.json(wallet);
+    res.json({
+      success: true,
+      balance: wallet.balance,
+      transactions: wallet.transactions.sort(
+        (a, b) => b.createdAt - a.createdAt
+      ),
+    });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// 💸 ADD MONEY (TOP-UP)
+// ===============================
+// ADD MONEY TO WALLET
+// ===============================
 const addMoney = async (req, res) => {
   try {
     const { amount } = req.body;
 
-    let wallet = await Wallet.findOne({
-      user: req.user._id,
-    });
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid amount",
+      });
+    }
 
-    // create wallet if not exists
+    let wallet = await Wallet.findOne({ user: req.user._id });
+
     if (!wallet) {
       wallet = await Wallet.create({
         user: req.user._id,
@@ -44,82 +55,25 @@ const addMoney = async (req, res) => {
       });
     }
 
-    // add balance
     wallet.balance += amount;
 
-    // transaction history
     wallet.transactions.push({
       type: "credit",
       amount,
-      note: "Wallet Top-Up",
+      note: "Wallet Recharge",
+      canteenName: "Self Top-up",
     });
 
     await wallet.save();
 
-    // 🔔 notification
-    await Notification.create({
-      user: req.user._id,
-      title: "Wallet Top-Up",
-      message: `₹${amount} added successfully`,
-      type: "wallet",
-    });
-
     res.json({
+      success: true,
       message: "Money added successfully",
-      wallet,
+      balance: wallet.balance,
     });
   } catch (error) {
     res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-// 💳 DEDUCT MONEY (ORDER PAYMENT)
-const deductMoney = async (req, res) => {
-  try {
-    const { amount, note } = req.body;
-
-    const wallet = await Wallet.findOne({
-      user: req.user._id,
-    });
-
-    // insufficient balance
-    if (!wallet || wallet.balance < amount) {
-      return res.status(400).json({
-        message: "Insufficient balance",
-      });
-    }
-
-    // deduct money
-    wallet.balance -= amount;
-
-    // transaction history
-    wallet.transactions.push({
-      type: "debit",
-      amount,
-      note: note || "Order Payment",
-    });
-
-    await wallet.save();
-
-    // 🔔 low balance notification
-    if (wallet.balance < 50) {
-      await Notification.create({
-        user: req.user._id,
-        title: "Low Balance Alert",
-        message:
-          "Your wallet balance is low. Please recharge.",
-        type: "wallet",
-      });
-    }
-
-    res.json({
-      message: "Money deducted successfully",
-      wallet,
-    });
-  } catch (error) {
-    res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -128,5 +82,4 @@ const deductMoney = async (req, res) => {
 module.exports = {
   getWallet,
   addMoney,
-  deductMoney,
 };

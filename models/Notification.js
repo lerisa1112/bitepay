@@ -1,38 +1,66 @@
+// ===============================
+// models/Notification.js
+// ===============================
+
 const mongoose = require("mongoose");
 
-const notificationSchema = new mongoose.Schema(
+const notificationSchema =
+new mongoose.Schema(
+
   {
+
     user: {
+
       type: mongoose.Schema.Types.ObjectId,
+
       ref: "User",
+
       required: true,
+
     },
 
     title: {
+
       type: String,
+
       required: true,
+
     },
 
     message: {
+
       type: String,
+
       required: true,
+
     },
 
     type: {
+
       type: String,
-      enum: ["order", "wallet", "admin"],
-      default: "order",
+
+      default: "general",
+
     },
 
     isRead: {
+
       type: Boolean,
+
       default: false,
+
     },
+
   },
-  { timestamps: true }
+
+  {
+    timestamps: true,
+  }
+
 );
 
-module.exports = mongoose.model(
+module.exports =
+mongoose.model(
   "Notification",
   notificationSchema
 );

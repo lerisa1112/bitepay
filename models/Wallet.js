@@ -19,12 +19,22 @@ const walletSchema = new mongoose.Schema(
           type: String, // credit / debit
           required: true,
         },
+
         amount: {
           type: Number,
           required: true,
         },
-        note: String,
-        date: {
+
+        canteenName: {
+          type: String,
+          default: "",
+        },
+
+        note: {
+          type: String,
+        },
+
+        createdAt: {
           type: Date,
           default: Date.now,
         },

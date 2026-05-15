@@ -1,57 +1,76 @@
 const Order = require("../models/Order");
 const Wallet = require("../models/Wallet");
+const User = require("../models/User");
 
-// 🔥 utilities (email + qr)
 const sendOrderConfirmation = require("../utils/orderEmail");
 const generateQR = require("../utils/qr");
 
-// 🛒 PLACE ORDER
+// ===============================
+// PLACE ORDER
+// ===============================
 const placeOrder = async (req, res) => {
   try {
-    const { vendor, items, totalAmount, pickupTime, pickupSlotId } =
-      req.body;
+    const io = req.app.get("io");
+    const userSocketMap = req.app.get("userSocketMap");
 
-    // 1️⃣ wallet check
-    const wallet = await Wallet.findOne({
-      user: req.user._id,
-    });
+    const {
+      vendor,
+      items,
+      totalAmount,
+      pickupTime,
+      pickupSlotId,
+    } = req.body;
+
+    // WALLET CHECK
+    const wallet = await Wallet.findOne({ user: req.user._id });
 
     if (!wallet) {
       return res.status(404).json({
+        success: false,
         message: "Wallet not found",
       });
     }
 
     if (wallet.balance < totalAmount) {
       return res.status(400).json({
+        success: false,
         message: "Insufficient wallet balance",
       });
     }
 
-    // 2️⃣ deduct wallet money
+    // GET VENDOR NAME
+    const vendorUser = await User.findById(vendor);
+
+    // DEDUCT MONEY
     wallet.balance -= totalAmount;
 
     wallet.transactions.push({
       type: "debit",
       amount: totalAmount,
       note: "Food Order Payment",
+      canteenName: vendor, 
+      createdAt: new Date(),
     });
 
     await wallet.save();
 
-    // 3️⃣ create order
+    // CREATE ORDER ID AUTO
+    const orderId = "ORD-" + Date.now();
+
+    // CREATE ORDER
     const order = await Order.create({
+      orderId,
       user: req.user._id,
       vendor,
       items,
       totalAmount,
       pickupTime,
       pickupSlot: pickupSlotId,
-      paymentStatus: "Paid",
-      status: "Placed",
+      paymentMethod: "Wallet",
+      orderStatus: "Pending",
     });
 
-    // 4️⃣ generate QR
+    // QR GENERATE
     const qr = await generateQR({
       orderId: order._id,
       user: req.user._id,
@@ -61,67 +80,198 @@ const placeOrder = async (req, res) => {
     order.qrCode = qr;
     await order.save();
 
-    // 5️⃣ send email (non-blocking safe)
-    try {
-      const user = req.user;
+    // ===============================
+    // 🔥 VENDOR NOTIFICATION
+    // ===============================
+    const vendorSocket = userSocketMap.get(vendor?.toString());
 
-      await sendOrderConfirmation(user, order);
+    if (vendorSocket && io) {
+      io.to(vendorSocket).emit("new_order", {
+        orderId: order.orderId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        pickupTime: order.pickupTime,
+      });
+    }
+
+    // EMAIL
+    try {
+      await sendOrderConfirmation(req.user, order);
     } catch (err) {
       console.log("Email error:", err.message);
     }
 
-    // 6️⃣ response
     res.status(201).json({
+      success: true,
       message: "Order placed successfully",
       order,
       qrCode: qr,
     });
+
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// 📦 GET USER ORDERS
+// ===============================
+// USER ORDERS
+// ===============================
 const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({
-      user: req.user._id,
-    }).populate("vendor", "name email");
+    const orders = await Order.find({ user: req.user._id })
+      .populate("vendor", "name canteenName")
+      .sort({ createdAt: -1 });
 
-    res.json(orders);
+    res.json({ success: true, orders });
+
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// 🏪 VENDOR UPDATE STATUS
-const updateStatus = async (req, res) => {
+// ===============================
+// VENDOR ORDERS
+// ===============================
+const getVendorOrders = async (req, res) => {
   try {
-    const { status } = req.body;
+    const orders = await Order.find({ vendor: req.user._id })
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      totalOrders: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// ACCEPT ORDER (USER NOTIFY)
+// ===============================
+const acceptOrder = async (req, res) => {
+  try {
+    const io = req.app.get("io");
+    const userSocketMap = req.app.get("userSocketMap");
 
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({
+        success: false,
         message: "Order not found",
       });
     }
 
-    // update status
-    order.status = status;
+    order.orderStatus = "Preparing";
+    await order.save();
 
+    const userSocket = userSocketMap.get(order.user?.toString());
+
+    if (userSocket && io) {
+      io.to(userSocket).emit("order_accepted", {
+        orderId: order.orderId,
+        message: "🎉 Order accepted by vendor",
+        status: "Preparing",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Order accepted successfully",
+      order,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// READY ORDER
+// ===============================
+const markOrderReady = async (req, res) => {
+  try {
+    const io = req.app.get("io");
+    const userSocketMap = req.app.get("userSocketMap");
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    order.orderStatus = "Ready";
+    await order.save();
+
+    const userSocket = userSocketMap.get(order.user?.toString());
+
+    if (userSocket && io) {
+      io.to(userSocket).emit("order_ready", {
+        orderId: order.orderId,
+        message: "🔥 Order is ready for pickup",
+        pickupTime: order.pickupTime,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Order is ready",
+      order,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// COMPLETE ORDER
+// ===============================
+const completeOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    order.orderStatus = "Completed";
     await order.save();
 
     res.json({
-      message: "Order status updated",
+      success: true,
+      message: "Order completed successfully",
       order,
     });
+
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -130,5 +280,8 @@ const updateStatus = async (req, res) => {
 module.exports = {
   placeOrder,
   getMyOrders,
-  updateStatus,
+  getVendorOrders,
+  acceptOrder,
+  markOrderReady,
+  completeOrder,
 };

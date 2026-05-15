@@ -4,13 +4,14 @@ const router = express.Router();
 const {
   getWallet,
   addMoney,
-  deductMoney,
 } = require("../controllers/walletController");
 
 const { protect } = require("../middleware/authMiddleware");
 
+// GET WALLET
 router.get("/", protect, getWallet);
+
+// ADD MONEY
 router.post("/add", protect, addMoney);
-router.post("/deduct", protect, deductMoney);
 
 module.exports = router;

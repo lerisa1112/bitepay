@@ -8,7 +8,7 @@ const menuSchema = new mongoose.Schema(
       required: true,
     },
 
-    name: {
+    foodName: {
       type: String,
       required: true,
     },
@@ -18,16 +18,20 @@ const menuSchema = new mongoose.Schema(
       required: true,
     },
 
-    description: String,
-
-    isAvailable: {
-      type: Boolean,
-      default: true,
+    image: {
+      type: String,
+      default: "",
     },
 
-    discount: {
-      type: Number,
-      default: 0, // rupees discount
+    description: {
+      type: String,
+      default: "",
+    },
+
+    stockStatus: {
+      type: String,
+      enum: ["In Stock", "Out Of Stock"],
+      default: "In Stock",
     },
   },
   { timestamps: true }

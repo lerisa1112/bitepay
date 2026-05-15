@@ -1,24 +1,121 @@
+// ===============================
+// routes/vendorRoutes.js
+// FULL UPDATED CODE
+// ===============================
+
 const express = require("express");
+
 const router = express.Router();
 
 const {
+
+  getVendorProfile,
+
+  updateCanteenInfo,
+
+  updateCanteenStatus,
+
   addMenu,
+
   getMyMenu,
+
+  deleteMenu,
+
+  updateStockStatus,
+
+  getVendorOrders,
+
   updateOrderStatus,
+
 } = require("../controllers/vendorController");
 
 const {
+
   protect,
   vendorOnly,
+
 } = require("../middleware/authMiddleware");
 
-// 🍔 ONLY VENDOR CAN ADD MENU
-router.post("/menu", protect, vendorOnly, addMenu);
+// ===============================
+// PROFILE
+// ===============================
 
-// 📋 ONLY VENDOR CAN SEE OWN MENU
-router.get("/menu", protect, vendorOnly, getMyMenu);
+router.get(
+  "/profile",
+  protect,
+  vendorOnly,
+  getVendorProfile
+);
 
-// 🏪 ONLY VENDOR CAN UPDATE ORDER
+// ===============================
+// UPDATE CANTEEN INFO
+// ===============================
+
+router.put(
+  "/canteen-info",
+  protect,
+  vendorOnly,
+  updateCanteenInfo
+);
+
+// ===============================
+// UPDATE CANTEEN STATUS
+// ===============================
+
+router.put(
+  "/canteen-status",
+  protect,
+  vendorOnly,
+  updateCanteenStatus
+);
+
+// ===============================
+// MENU
+// ===============================
+
+router.post(
+  "/menu",
+  protect,
+  vendorOnly,
+  addMenu
+);
+
+router.get(
+  "/menu",
+  protect,
+  vendorOnly,
+  getMyMenu
+);
+
+router.delete(
+  "/menu/:id",
+  protect,
+  vendorOnly,
+  deleteMenu
+);
+
+// ===============================
+// STOCK
+// ===============================
+
+router.put(
+  "/menu/stock/:id",
+  protect,
+  vendorOnly,
+  updateStockStatus
+);
+
+// ===============================
+// ORDERS
+// ===============================
+
+router.get(
+  "/orders",
+  protect,
+  vendorOnly,
+  getVendorOrders
+);
+
 router.put(
   "/order/:id",
   protect,

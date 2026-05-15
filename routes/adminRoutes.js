@@ -1,57 +1,93 @@
+// ===============================
+// routes/authRoutes.js
+// FULL CODE
+// ===============================
+
 const express = require("express");
+
 const router = express.Router();
 
 const {
-  getAllUsers,
-  getAllOrders,
-  getAllWallets,
-  approveVendor,
-  sendAdminMessage,
-} = require("../controllers/adminController");
+
+  registerUser,
+  loginUser,
+
+  forgotPassword,
+  resetPassword,
+
+  sendOTP,
+  verifyOTP,
+
+  deleteAccount,
+
+} = require("../controllers/authController");
 
 const {
   protect,
-  adminOnly,
 } = require("../middleware/authMiddleware");
 
-// 👥 GET ALL USERS
-router.get(
-  "/users",
-  protect,
-  adminOnly,
-  getAllUsers
-);
+// ===============================
+// REGISTER
+// ===============================
 
-// 🛒 GET ALL ORDERS
-router.get(
-  "/orders",
-  protect,
-  adminOnly,
-  getAllOrders
-);
-
-// 💰 GET ALL WALLETS
-router.get(
-  "/wallets",
-  protect,
-  adminOnly,
-  getAllWallets
-);
-
-// 🏪 APPROVE VENDOR
-router.put(
-  "/vendor/:id/approve",
-  protect,
-  adminOnly,
-  approveVendor
-);
-
-// 📢 SEND ADMIN MESSAGE
 router.post(
-  "/message",
+  "/register",
+  registerUser
+);
+
+// ===============================
+// LOGIN
+// ===============================
+
+router.post(
+  "/login",
+  loginUser
+);
+
+// ===============================
+// FORGOT PASSWORD LINK
+// ===============================
+
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+// ===============================
+// RESET PASSWORD USING TOKEN
+// ===============================
+
+router.post(
+  "/reset-password/:token",
+  resetPassword
+);
+
+// ===============================
+// SEND OTP
+// ===============================
+
+router.post(
+  "/send-otp",
+  sendOTP
+);
+
+// ===============================
+// VERIFY OTP + RESET PASSWORD
+// ===============================
+
+router.post(
+  "/verify-otp",
+  verifyOTP
+);
+
+// ===============================
+// DELETE ACCOUNT
+// ===============================
+
+router.delete(
+  "/delete-account",
   protect,
-  adminOnly,
-  sendAdminMessage
+  deleteAccount
 );
 
 module.exports = router;

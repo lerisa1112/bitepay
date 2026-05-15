@@ -2,38 +2,108 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    phone: { type: String, required: true },
+    // BASIC INFO
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
+
+    // ROLE
     role: {
       type: String,
       enum: ["user", "vendor", "admin"],
       default: "user",
     },
 
+    // =========================
+    // VENDOR DETAILS
+    // =========================
+
     canteenName: {
-  type: String,
-},
+      type: String,
+      default: "",
+    },
 
-vendorStatus: {
-  type: String,
-  enum: ["Pending Review", "Approved", "Rejected"],
-  default: "Pending Review",
-},
+    shopDescription: {
+      type: String,
+      default: "",
+    },
 
-    isApproved: { type: Boolean, default: false },
+    canteenLocation: {
+      type: String,
+      default: "",
+    },
 
-    // 🔐 RESET PASSWORD
-    resetToken: String,
-    resetTokenExpire: Date,
+    openingTime: {
+      type: String,
+      default: "",
+    },
 
-    // 🔐 OTP RESET
-    resetOTP: String,
-    otpExpire: Date,
+    closingTime: {
+      type: String,
+      default: "",
+    },
+
+    vendorStatus: {
+      type: String,
+      enum: [
+        "Pending Review",
+        "Approved",
+        "Rejected",
+      ],
+      default: "Pending Review",
+    },
+
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+
+    // RESET PASSWORD TOKEN
+    resetToken: {
+      type: String,
+      default: "",
+    },
+
+    resetTokenExpire: {
+      type: Date,
+    },
+
+    // OTP RESET
+    resetOTP: {
+      type: String,
+      default: "",
+    },
+
+    otpExpire: {
+      type: Date,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model(
+  "User",
+  userSchema
+);

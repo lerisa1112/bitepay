@@ -1,17 +1,57 @@
+// ===============================
+// routes/notificationRoutes.js
+// ===============================
+
 const express = require("express");
+
 const router = express.Router();
 
 const {
+
   getMyNotifications,
+
   markAsRead,
-} = require("../controllers/notificationController");
 
-const { protect } = require("../middleware/authMiddleware");
+  deleteNotification,
 
-// 🔔 get notifications
-router.get("/", protect, getMyNotifications);
+} = require(
+  "../controllers/notificationController"
+);
 
-// ✅ mark read
-router.put("/:id", protect, markAsRead);
+const {
+  protect,
+} = require(
+  "../middleware/authMiddleware"
+);
+
+// ===============================
+// GET NOTIFICATIONS
+// ===============================
+
+router.get(
+  "/",
+  protect,
+  getMyNotifications
+);
+
+// ===============================
+// MARK AS READ
+// ===============================
+
+router.put(
+  "/read/:id",
+  protect,
+  markAsRead
+);
+
+// ===============================
+// DELETE
+// ===============================
+
+router.delete(
+  "/:id",
+  protect,
+  deleteNotification
+);
 
 module.exports = router;
