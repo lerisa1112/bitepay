@@ -3,72 +3,88 @@ const Order = require("../models/Order");
 const Wallet = require("../models/Wallet");
 const Notification = require("../models/Notification");
 
-//
 // ==========================
 // DASHBOARD DATA
 // ==========================
-const getDashboardData = async (req, res) => {
+
+const getDashboardData = async (
+  req,
+  res
+) => {
 
   try {
 
-    // TOTAL USERS
-    const totalUsers = await User.countDocuments({
+    const totalUsers =
+        await User.countDocuments({
       role: "user",
     });
 
-    // ACTIVE VENDORS
-    const activeVendors = await User.countDocuments({
+    const activeVendors =
+        await User.countDocuments({
       role: "vendor",
       isApproved: true,
     });
 
-    // PENDING VENDORS
-    const pendingVendors = await User.countDocuments({
+    const pendingVendors =
+        await User.countDocuments({
       role: "vendor",
       isApproved: false,
     });
 
-    // TOTAL ORDERS
-    const totalOrders = await Order.countDocuments();
+    const totalOrders =
+        await Order.countDocuments();
 
-    // TOTAL REVENUE
-    const revenueData = await Order.find({
+    const revenueData =
+        await Order.find({
       paymentStatus: "Paid",
     });
 
     let totalRevenue = 0;
 
     revenueData.forEach((order) => {
-      totalRevenue += order.totalAmount || 0;
+
+      totalRevenue +=
+          order.totalAmount || 0;
+
     });
 
-    // WALLET BALANCE
-    const wallets = await Wallet.find();
+    const wallets =
+        await Wallet.find();
 
     let walletBalance = 0;
 
     wallets.forEach((wallet) => {
-      walletBalance += wallet.balance || 0;
+
+      walletBalance +=
+          wallet.balance || 0;
+
     });
 
-    // TODAY USERS
     const today = new Date();
 
     today.setHours(0, 0, 0, 0);
 
     const newUsersToday =
-      await User.countDocuments({
-        createdAt: { $gte: today },
-      });
+        await User.countDocuments({
 
-    // TODAY ORDERS
+      createdAt: {
+        $gte: today,
+      },
+
+    });
+
     const ordersToday =
-      await Order.countDocuments({
-        createdAt: { $gte: today },
-      });
+        await Order.countDocuments({
 
-    // SALES OVERVIEW
-    const salesOverview = await Order.aggregate([
+      createdAt: {
+        $gte: today,
+      },
+
+    });
+
+    const salesOverview =
+        await Order.aggregate([
+
       {
         $match: {
           paymentStatus: "Paid",
@@ -77,16 +93,23 @@ const getDashboardData = async (req, res) => {
 
       {
         $group: {
+
           _id: {
+
             $dateToString: {
+
               format: "%Y-%m-%d",
+
               date: "$createdAt",
+
             },
+
           },
 
           sales: {
             $sum: "$totalAmount",
           },
+
         },
       },
 
@@ -95,192 +118,396 @@ const getDashboardData = async (req, res) => {
           _id: 1,
         },
       },
+
     ]);
 
-    // RECENT ORDERS
-    const recentOrders = await Order.find()
-      .populate("user", "name")
-      .sort({ createdAt: -1 })
+    const recentOrders =
+        await Order.find()
+
+      .populate(
+        "user",
+        "name"
+      )
+
+      .sort({
+        createdAt: -1,
+      })
+
       .limit(5);
 
     res.json({
+
       totalUsers,
+
       activeVendors,
+
       pendingVendors,
+
       totalOrders,
+
       totalRevenue,
+
       walletBalance,
+
       newUsersToday,
+
       ordersToday,
+
       salesOverview,
+
       recentOrders,
+
     });
 
   } catch (error) {
 
     res.status(500).json({
+
       message: error.message,
+
     });
 
   }
 
 };
 
-//
 // ==========================
 // GET ALL USERS
 // ==========================
-const getAllUsers = async (req, res) => {
 
-  try {
-
-    const users = await User.find().select(
-      "-password"
-    );
-
-    res.json(users);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
-
-};
-
-//
-// ==========================
-// GET ALL ORDERS
-// ==========================
-const getAllOrders = async (req, res) => {
-
-  try {
-
-    const orders = await Order.find()
-      .populate("user", "name email")
-      .populate("vendor", "name email");
-
-    res.json(orders);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
-
-};
-
-//
-// ==========================
-// GET ALL WALLETS
-// ==========================
-const getAllWallets = async (req, res) => {
-
-  try {
-
-    const wallets = await Wallet.find()
-      .populate("user", "name email");
-
-    res.json(wallets);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
-
-};
-
-//
-// ==========================
-// APPROVE VENDOR
-// ==========================
-const approveVendor = async (req, res) => {
-
-  try {
-
-    const vendor = await User.findById(
-      req.params.id
-    );
-
-    if (!vendor) {
-
-      return res.status(404).json({
-        message: "Vendor not found",
-      });
-
-    }
-
-    vendor.isApproved = true;
-
-    await vendor.save();
-
-    // NOTIFICATION
-    await Notification.create({
-      user: vendor._id,
-      title: "Vendor Approved",
-      message:
-        "Your vendor account has been approved by admin.",
-      type: "admin",
-    });
-
-    res.json({
-      message:
-        "Vendor approved successfully",
-      vendor,
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
-
-};
-
-//
-// ==========================
-// SEND ADMIN MESSAGE
-// ==========================
-const sendAdminMessage = async (
+const getAllUsers = async (
   req,
   res
 ) => {
 
   try {
 
-    const {
-      userId,
-      title,
-      message
-    } = req.body;
+    const users =
+        await User.find()
+            .select("-password");
 
-    const notification =
-      await Notification.create({
-        user: userId,
-        title,
-        message,
-        type: "admin",
-      });
+    res.json(users);
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// GET PENDING VENDORS
+// ==========================
+
+const getPendingVendors =
+    async (req, res) => {
+
+  try {
+
+    const vendors =
+        await User.find({
+
+      role: "vendor",
+
+      isApproved: false,
+
+    }).select("-password");
 
     res.json({
-      message:
-        "Admin notification sent successfully",
-      notification,
+
+      success: true,
+
+      vendors,
+
     });
 
   } catch (error) {
 
     res.status(500).json({
+
+      success: false,
+
       message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// GET ALL ORDERS
+// ==========================
+
+const getAllOrders = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const orders =
+        await Order.find()
+
+      .populate(
+        "user",
+        "name email"
+      )
+
+      .populate(
+        "vendor",
+        "name email"
+      );
+
+    res.json(orders);
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// GET ALL WALLETS
+// ==========================
+
+const getAllWallets = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const wallets =
+        await Wallet.find()
+
+      .populate(
+        "user",
+        "name email"
+      );
+
+    res.json(wallets);
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// APPROVE VENDOR
+// ==========================
+
+const approveVendor =
+    async (req, res) => {
+
+  try {
+
+    const vendor =
+        await User.findById(
+          req.params.id
+        );
+
+    if (!vendor) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message:
+            "Vendor not found",
+
+      });
+
+    }
+
+    vendor.isApproved = true;
+
+    vendor.vendorStatus =
+        "Approved";
+
+    await vendor.save();
+
+    // NOTIFICATION
+
+    await Notification.create({
+
+      user: vendor._id,
+
+      title:
+          "Vendor Approved",
+
+      message:
+          "Your vendor account has been approved by admin.",
+
+      type: "admin",
+
+    });
+
+    res.json({
+
+      success: true,
+
+      message:
+          "Vendor approved successfully",
+
+      vendor,
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// REJECT VENDOR
+// ==========================
+
+const rejectVendor =
+    async (req, res) => {
+
+  try {
+
+    const vendor =
+        await User.findById(
+          req.params.id
+        );
+
+    if (!vendor) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message:
+            "Vendor not found",
+
+      });
+
+    }
+
+    vendor.isApproved = false;
+
+    vendor.vendorStatus =
+        "Rejected";
+
+    await vendor.save();
+
+    await Notification.create({
+
+      user: vendor._id,
+
+      title:
+          "Vendor Rejected",
+
+      message:
+          "Your vendor request was rejected by admin.",
+
+      type: "admin",
+
+    });
+
+    res.json({
+
+      success: true,
+
+      message:
+          "Vendor rejected successfully",
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+// ==========================
+// SEND ADMIN MESSAGE
+// ==========================
+
+const sendAdminMessage =
+    async (req, res) => {
+
+  try {
+
+    const {
+
+      userId,
+
+      title,
+
+      message,
+
+    } = req.body;
+
+    const notification =
+        await Notification.create({
+
+      user: userId,
+
+      title,
+
+      message,
+
+      type: "admin",
+
+    });
+
+    res.json({
+
+      success: true,
+
+      message:
+          "Admin notification sent successfully",
+
+      notification,
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message,
+
     });
 
   }
@@ -288,10 +515,21 @@ const sendAdminMessage = async (
 };
 
 module.exports = {
+
   getDashboardData,
+
   getAllUsers,
+
+  getPendingVendors,
+
   getAllOrders,
+
   getAllWallets,
+
   approveVendor,
+
+  rejectVendor,
+
   sendAdminMessage,
+
 };

@@ -1,6 +1,6 @@
 // ===============================
-// routes/authRoutes.js
-// FULL CODE
+// routes/adminRoutes.js
+// FULL UPDATED CODE
 // ===============================
 
 const express = require("express");
@@ -9,85 +9,142 @@ const router = express.Router();
 
 const {
 
-  registerUser,
-  loginUser,
+  getDashboardData,
 
-  forgotPassword,
-  resetPassword,
+  getAllUsers,
 
-  sendOTP,
-  verifyOTP,
+  getPendingVendors,
 
-  deleteAccount,
+  getAllOrders,
 
-} = require("../controllers/authController");
+  getAllWallets,
+
+  approveVendor,
+
+  rejectVendor,
+
+  sendAdminMessage,
+
+} = require(
+  "../controllers/adminController"
+);
 
 const {
   protect,
-} = require("../middleware/authMiddleware");
-
-// ===============================
-// REGISTER
-// ===============================
-
-router.post(
-  "/register",
-  registerUser
+} = require(
+  "../middleware/authMiddleware"
 );
 
 // ===============================
-// LOGIN
+// DASHBOARD
 // ===============================
 
-router.post(
-  "/login",
-  loginUser
-);
+router.get(
 
-// ===============================
-// FORGOT PASSWORD LINK
-// ===============================
+  "/dashboard",
 
-router.post(
-  "/forgot-password",
-  forgotPassword
-);
-
-// ===============================
-// RESET PASSWORD USING TOKEN
-// ===============================
-
-router.post(
-  "/reset-password/:token",
-  resetPassword
-);
-
-// ===============================
-// SEND OTP
-// ===============================
-
-router.post(
-  "/send-otp",
-  sendOTP
-);
-
-// ===============================
-// VERIFY OTP + RESET PASSWORD
-// ===============================
-
-router.post(
-  "/verify-otp",
-  verifyOTP
-);
-
-// ===============================
-// DELETE ACCOUNT
-// ===============================
-
-router.delete(
-  "/delete-account",
   protect,
-  deleteAccount
+
+  getDashboardData
+
+);
+
+// ===============================
+// GET ALL USERS
+// ===============================
+
+router.get(
+
+  "/users",
+
+  protect,
+
+  getAllUsers
+
+);
+
+// ===============================
+// GET PENDING VENDORS
+// ===============================
+
+router.get(
+
+  "/pending-vendors",
+
+  protect,
+
+  getPendingVendors
+
+);
+
+// ===============================
+// GET ALL ORDERS
+// ===============================
+
+router.get(
+
+  "/orders",
+
+  protect,
+
+  getAllOrders
+
+);
+
+// ===============================
+// GET ALL WALLETS
+// ===============================
+
+router.get(
+
+  "/wallets",
+
+  protect,
+
+  getAllWallets
+
+);
+
+// ===============================
+// APPROVE VENDOR
+// ===============================
+
+router.put(
+
+  "/approve-vendor/:id",
+
+  protect,
+
+  approveVendor
+
+);
+
+// ===============================
+// REJECT VENDOR
+// ===============================
+
+router.put(
+
+  "/reject-vendor/:id",
+
+  protect,
+
+  rejectVendor
+
+);
+
+// ===============================
+// SEND ADMIN MESSAGE
+// ===============================
+
+router.post(
+
+  "/send-message",
+
+  protect,
+
+  sendAdminMessage
+
 );
 
 module.exports = router;
