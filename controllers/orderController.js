@@ -16,16 +16,28 @@ const placeOrder = async (req, res) => {
 
     const { vendor, items, totalAmount, pickupTime, pickupSlotId } = req.body;
 
+    // =========================
+    // 1. WALLET CHECK
+    // =========================
     const wallet = await Wallet.findOne({ user: req.user._id });
 
     if (!wallet) {
-      return res.status(404).json({ success: false, message: "Wallet not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Wallet not found",
+      });
     }
 
     if (wallet.balance < totalAmount) {
-      return res.status(400).json({ success: false, message: "Insufficient balance" });
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient balance",
+      });
     }
 
+    // =========================
+    // 2. DEBIT WALLET
+    // =========================
     wallet.balance -= totalAmount;
 
     wallet.transactions.push({
@@ -38,7 +50,10 @@ const placeOrder = async (req, res) => {
 
     await wallet.save();
 
-    const order = await Order.create({
+    // =========================
+    // 3. CREATE ORDER
+    // =========================
+    let order = await Order.create({
       orderId: "ORD-" + Date.now(),
       user: req.user._id,
       vendor,
@@ -50,6 +65,16 @@ const placeOrder = async (req, res) => {
       orderStatus: "Pending",
     });
 
+    // =========================
+    // 4. POPULATE USER + VENDOR
+    // =========================
+    order = await Order.findById(order._id)
+      .populate("user", "name email phone")
+      .populate("vendor", "name canteenName");
+
+    // =========================
+    // 5. GENERATE QR
+    // =========================
     const qr = await generateQR({
       orderId: order._id,
       user: req.user._id,
@@ -59,7 +84,11 @@ const placeOrder = async (req, res) => {
     order.qrCode = qr;
     await order.save();
 
-    // ✅ USER NOTIFICATION
+    // =========================
+    // 6. NOTIFICATIONS
+    // =========================
+
+    // user notification
     await Notification.create({
       user: req.user._id,
       title: "Order Placed",
@@ -68,7 +97,7 @@ const placeOrder = async (req, res) => {
       role: "user",
     });
 
-    // ✅ ADMIN NOTIFICATION (FIXED)
+    // admin notification
     await Notification.create({
       user: null,
       title: "New Order",
@@ -77,16 +106,30 @@ const placeOrder = async (req, res) => {
       role: "admin",
     });
 
+    // =========================
+    // 7. SOCKET EMIT (VENDOR)
+    // =========================
     const vendorSocket = userSocketMap.get(vendor?.toString());
 
     if (vendorSocket && io) {
       io.to(vendorSocket).emit("new_order", order);
     }
 
-    res.json({ success: true, order, qrCode: qr });
+    // =========================
+    // 8. FINAL RESPONSE
+    // =========================
+    res.json({
+      success: true,
+      message: "Order placed successfully",
+      order,
+      qrCode: qr,
+    });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -115,17 +158,25 @@ const getMyOrders = async (req, res) => {
 const getVendorOrders = async (req, res) => {
   try {
     const orders = await Order.find({ vendor: req.user._id })
-      .populate("user", "name email phone")
+      .populate({
+        path: "user",
+        select: "name email phone",
+      })
+      .populate({
+        path: "vendor",
+        select: "name canteenName",
+      })
+      .lean() 
       .sort({ createdAt: -1 });
 
-    res.json({
+    return res.json({
       success: true,
       totalOrders: orders.length,
       orders,
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
