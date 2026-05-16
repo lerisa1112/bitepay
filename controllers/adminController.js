@@ -175,32 +175,29 @@ const getDashboardData = async (
 // GET ALL USERS
 // ==========================
 
-const getAllUsers = async (
-  req,
-  res
-) => {
-
+const getAllUsers = async (req, res) => {
   try {
+    const users = await User.find().select("-password");
 
-    const users =
-      await User.find({
+    const usersWithStatus = await Promise.all(
+      users.map(async (user) => {
+        const orderCount = await Order.countDocuments({
+          user: user._id,
+        });
 
-        role: "user",
+        return {
+          ...user.toObject(),
+          hasOrdered: orderCount > 0,
+        };
+      })
+    );
 
-      }).select("-password");
-
-    res.json(users);
-
+    res.json(usersWithStatus);
   } catch (error) {
-
     res.status(500).json({
-
       message: error.message,
-
     });
-
   }
-
 };
 
 
