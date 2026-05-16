@@ -438,6 +438,73 @@ const getVendorOrders = async (
 
 };
 
+const getPendingVendors = async (req, res) => {
+  try {
+    const vendors = await User.find({
+      role: "vendor",
+      isApproved: false,
+    }).select("-password");
+
+    res.json(vendors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// APPROVED
+const getApprovedVendors = async (req, res) => {
+  try {
+    const vendors = await User.find({
+      role: "vendor",
+      isApproved: true,
+    }).select("-password");
+
+    res.json(vendors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// APPROVE
+const approveVendor = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    vendor.isApproved = true;
+    vendor.vendorStatus = "Approved";
+
+    await vendor.save();
+
+    res.json({ message: "Vendor approved" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// REJECT
+const rejectVendor = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    vendor.isApproved = false;
+    vendor.vendorStatus = "Rejected";
+
+    await vendor.save();
+
+    res.json({ message: "Vendor rejected" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // ===============================
 // UPDATE ORDER STATUS
 // ===============================
@@ -531,6 +598,16 @@ const updateOrderStatus = async (
 module.exports = {
 
   getVendorProfile,
+
+  getPendingVendors ,
+
+
+  getApprovedVendors ,
+
+  approveVendor ,
+
+
+  rejectVendor ,
 
   updateCanteenInfo,
 

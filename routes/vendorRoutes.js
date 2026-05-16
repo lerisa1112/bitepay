@@ -13,6 +13,17 @@ const {
 
   updateCanteenInfo,
 
+
+  getPendingVendors ,
+
+
+  getApprovedVendors ,
+
+  approveVendor ,
+
+
+  rejectVendor ,
+
   updateCanteenStatus,
 
   addMenu,
@@ -122,5 +133,17 @@ router.put(
   vendorOnly,
   updateOrderStatus
 );
+
+router.get("/vendors/pending", protect, getPendingVendors);
+
+// APPROVED
+router.get("/vendors/approved", protect, getApprovedVendors);
+
+// APPROVE
+router.put("/vendor/approve/:id", protect, approveVendor);
+
+// REJECT
+router.put("/vendor/reject/:id", protect, rejectVendor);
+
 
 module.exports = router;
