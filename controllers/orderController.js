@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Wallet = require("../models/Wallet");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 
 const sendOrderConfirmation = require("../utils/orderEmail");
 const generateQR = require("../utils/qr");
@@ -13,53 +14,32 @@ const placeOrder = async (req, res) => {
     const io = req.app.get("io");
     const userSocketMap = req.app.get("userSocketMap");
 
-    const {
-      vendor,
-      items,
-      totalAmount,
-      pickupTime,
-      pickupSlotId,
-    } = req.body;
+    const { vendor, items, totalAmount, pickupTime, pickupSlotId } = req.body;
 
-    // WALLET CHECK
     const wallet = await Wallet.findOne({ user: req.user._id });
 
     if (!wallet) {
-      return res.status(404).json({
-        success: false,
-        message: "Wallet not found",
-      });
+      return res.status(404).json({ success: false, message: "Wallet not found" });
     }
 
     if (wallet.balance < totalAmount) {
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient wallet balance",
-      });
+      return res.status(400).json({ success: false, message: "Insufficient balance" });
     }
 
-    // GET VENDOR NAME
-    const vendorUser = await User.findById(vendor);
-
-    // DEDUCT MONEY
     wallet.balance -= totalAmount;
 
     wallet.transactions.push({
       type: "debit",
       amount: totalAmount,
       note: "Food Order Payment",
-      canteenName: vendor, 
+      canteenName: vendor,
       createdAt: new Date(),
     });
 
     await wallet.save();
 
-    // CREATE ORDER ID AUTO
-    const orderId = "ORD-" + Date.now();
-
-    // CREATE ORDER
     const order = await Order.create({
-      orderId,
+      orderId: "ORD-" + Date.now(),
       user: req.user._id,
       vendor,
       items,
@@ -70,7 +50,6 @@ const placeOrder = async (req, res) => {
       orderStatus: "Pending",
     });
 
-    // QR GENERATE
     const qr = await generateQR({
       orderId: order._id,
       user: req.user._id,
@@ -80,39 +59,34 @@ const placeOrder = async (req, res) => {
     order.qrCode = qr;
     await order.save();
 
-    // ===============================
-    // 🔥 VENDOR NOTIFICATION
-    // ===============================
+    // ✅ USER NOTIFICATION
+    await Notification.create({
+      user: req.user._id,
+      title: "Order Placed",
+      message: `Order ${order.orderId} placed successfully`,
+      type: "order",
+      role: "user",
+    });
+
+    // ✅ ADMIN NOTIFICATION (FIXED)
+    await Notification.create({
+      user: null,
+      title: "New Order",
+      message: `Order ${order.orderId} received`,
+      type: "admin",
+      role: "admin",
+    });
+
     const vendorSocket = userSocketMap.get(vendor?.toString());
 
     if (vendorSocket && io) {
-      io.to(vendorSocket).emit("new_order", {
-        orderId: order.orderId,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        pickupTime: order.pickupTime,
-      });
+      io.to(vendorSocket).emit("new_order", order);
     }
 
-    // EMAIL
-    try {
-      await sendOrderConfirmation(req.user, order);
-    } catch (err) {
-      console.log("Email error:", err.message);
-    }
+    res.json({ success: true, order, qrCode: qr });
 
-    res.status(201).json({
-      success: true,
-      message: "Order placed successfully",
-      order,
-      qrCode: qr,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -169,36 +143,30 @@ const acceptOrder = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
     order.orderStatus = "Preparing";
     await order.save();
 
+    await Notification.create({
+      user: order.user,
+      title: "Order Accepted",
+      message: "Your order is being prepared",
+      type: "order",
+      role: "user",
+    });
+
     const userSocket = userSocketMap.get(order.user?.toString());
 
     if (userSocket && io) {
-      io.to(userSocket).emit("order_accepted", {
-        orderId: order.orderId,
-        message: "🎉 Order accepted by vendor",
-        status: "Preparing",
-      });
+      io.to(userSocket).emit("order_accepted", order);
     }
 
-    res.json({
-      success: true,
-      message: "Order accepted successfully",
-      order,
-    });
+    res.json({ success: true, order });
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -222,13 +190,20 @@ const markOrderReady = async (req, res) => {
     order.orderStatus = "Ready";
     await order.save();
 
+    // USER NOTIFICATION
+    await Notification.create({
+      user: order.user,
+      title: "Order Ready",
+      message: "Your order is ready for pickup",
+      type: "order",
+    });
+
     const userSocket = userSocketMap.get(order.user?.toString());
 
     if (userSocket && io) {
       io.to(userSocket).emit("order_ready", {
         orderId: order.orderId,
-        message: "🔥 Order is ready for pickup",
-        pickupTime: order.pickupTime,
+        message: "Order ready",
       });
     }
 
@@ -245,7 +220,6 @@ const markOrderReady = async (req, res) => {
     });
   }
 };
-
 // ===============================
 // COMPLETE ORDER
 // ===============================
@@ -262,6 +236,13 @@ const completeOrder = async (req, res) => {
 
     order.orderStatus = "Completed";
     await order.save();
+
+    await Notification.create({
+      user: order.user,
+      title: "Order Completed",
+      message: "Enjoy your meal 🎉",
+      type: "order",
+    });
 
     res.json({
       success: true,
