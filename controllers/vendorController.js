@@ -195,100 +195,107 @@ const updateCanteenStatus = async (
 
 };
 
+
+const getAllVendorsWithMenu = async (req, res) => {
+  try {
+    // 1. all vendors
+    const vendors = await User.find({ role: "vendor" }).select("-password");
+
+    // 2. loop and attach menu
+    const result = await Promise.all(
+      vendors.map(async (vendor) => {
+        const menu = await Menu.find({ vendor: vendor._id });
+
+        return {
+          vendor: {
+            _id: vendor._id,
+            name: vendor.name,
+            canteenName: vendor.canteenName,
+            canteenLocation: vendor.canteenLocation,
+            address: vendor.address,
+            phone: vendor.phone,
+            vendorStatus: vendor.vendorStatus,
+            isApproved: vendor.isApproved,
+          },
+          menuItems: menu,
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      totalVendors: result.length,
+      data: result,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
 // ===============================
 // ADD MENU ITEM
 // ===============================
 
+
 const addMenu = async (req, res) => {
-
   try {
-
-    const {
-
-      name,
-      price,
-      description,
-      image,
-      discount,
-
-    } = req.body;
-
     const menu = await Menu.create({
-
       vendor: req.user._id,
-
-      name,
-
-      price,
-
-      description,
-
-      image,
-
-      discount,
-
-      inStock: true,
-
+      foodName: req.body.foodName,
+      price: req.body.price,
+      image: req.body.image,
+      description: req.body.description,
     });
 
-    res.status(201).json({
+    // 🔥 ONLY vendor required fields
+    const populatedMenu = await Menu.findById(menu._id).populate(
+      "vendor",
+      "canteenName canteenLocation address" // 👈 only these fields
+    );
 
+    return res.json({
       success: true,
-
-      message: "Menu item added",
-
-      menu,
-
+      message: "Menu item added successfully",
+      menu: populatedMenu,
     });
 
-  } catch (error) {
-
-    res.status(500).json({
-
+  } catch (err) {
+    return res.status(500).json({
       success: false,
-      message: error.message,
-
+      message: err.message,
     });
-
   }
-
 };
+
 
 // ===============================
 // GET MY MENU
 // ===============================
 
+
 const getMyMenu = async (req, res) => {
-
   try {
-
-    const menu = await Menu.find({
-
-      vendor: req.user._id,
-
+    const menuItems = await Menu.find({ vendor: req.user._id }).sort({
+      createdAt: -1,
     });
 
     res.json({
-
       success: true,
-
-      totalItems: menu.length,
-
-      menu,
-
+      totalItems: menuItems.length,
+      menuItems, // 👈 IMPORTANT (exact same key as Postman)
     });
 
   } catch (error) {
-
     res.status(500).json({
-
       success: false,
       message: error.message,
-
     });
-
   }
-
 };
 
 // ===============================
@@ -614,6 +621,8 @@ module.exports = {
   updateCanteenStatus,
 
   addMenu,
+
+  getAllVendorsWithMenu,
 
   getMyMenu,
 

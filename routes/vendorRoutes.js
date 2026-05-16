@@ -19,6 +19,8 @@ const {
 
   addMenu,
 
+  getAllVendorsWithMenu,
+
   getMyMenu,
 
   deleteMenu,
@@ -125,6 +127,7 @@ router.put(
   updateOrderStatus
 );
 
+router.get("/vendors/all-details", getAllVendorsWithMenu);
 
 
 
