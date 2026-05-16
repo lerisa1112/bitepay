@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   getDashboardData,
   getAllUsers,
+  getAllVendors,   // ✅ ADD THIS
   getPendingVendors,
   getApprovedVendors,
   approveVendor,
@@ -32,10 +33,8 @@ router.get("/users", protect, getAllUsers);
 // VENDORS
 // ===============================
 
-// all vendors (optional use if needed)
-router.get("/vendors", protect, (req, res) => {
-  res.json({ message: "Use pending/approved APIs" });
-});
+// ✅ FIXED: REAL VENDORS API (IMPORTANT)
+router.get("/vendors", protect, getAllVendors);
 
 // pending vendors
 router.get("/vendors/pending", protect, getPendingVendors);
