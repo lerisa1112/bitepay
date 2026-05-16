@@ -117,6 +117,37 @@ const registerUser = async (req, res) => {
   }
 };
 
+
+// =======================
+// LOGOUT USER
+// =======================
+
+const logoutUser = async (req, res) => {
+
+  try {
+
+    res.status(200).json({
+
+      success: true,
+
+      message: "Logout successful",
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
 // =======================
 // LOGIN USER
 // =======================
@@ -204,6 +235,7 @@ const deleteAccount = async (req, res) => { /* same as yours */ };
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
   forgotPassword,
   resetPassword,
   sendOTP,
