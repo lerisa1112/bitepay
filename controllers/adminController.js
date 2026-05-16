@@ -177,22 +177,32 @@ const getDashboardData = async (
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
 
-    const usersWithStatus = await Promise.all(
+    const users = await User.find({
+      role: "user",
+    }).select("-password");
+
+    const result = await Promise.all(
       users.map(async (user) => {
+
         const orderCount = await Order.countDocuments({
           user: user._id,
         });
 
         return {
-          ...user.toObject(),
-          hasOrdered: orderCount > 0,
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          isActiveCustomer: orderCount > 0,
+          totalOrders: orderCount,
         };
       })
     );
 
-    res.json(usersWithStatus);
+    res.json(result);
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -201,32 +211,23 @@ const getAllUsers = async (req, res) => {
 };
 
 
-const getAllVendors = async (
-  req,
-  res
-) => {
 
+const getAllVendors = async (req, res) => {
   try {
 
-    const vendors =
-      await User.find({
-
-        role: "vendor",
-
-      }).select("-password");
+    const vendors = await User.find({
+      role: "vendor",
+    }).select("-password");
 
     res.json(vendors);
 
   } catch (error) {
 
     res.status(500).json({
-
       message: error.message,
-
     });
 
   }
-
 };
 
 // ==========================
