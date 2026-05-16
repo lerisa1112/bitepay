@@ -1,164 +1,71 @@
-// ===============================
-// routes/adminRoutes.js
-// FULL UPDATED CODE
-// ===============================
-
 const express = require("express");
-
 const router = express.Router();
 
 const {
-
   getDashboardData,
-
   getAllUsers,
-
-  getAllVendors,
-
   getPendingVendors,
-
-  getAllOrders,
-
-  getAllWallets,
-
+  getApprovedVendors,
   approveVendor,
-
   rejectVendor,
-
+  getAllOrders,
+  getAllWallets,
   sendAdminMessage,
+} = require("../controllers/adminController");
 
-} = require(
-  "../controllers/adminController"
-);
+const { protect } = require("../middleware/authMiddleware");
 
-const {
-  protect,
-} = require(
-  "../middleware/authMiddleware"
-);
 
 // ===============================
 // DASHBOARD
 // ===============================
+router.get("/dashboard", protect, getDashboardData);
 
-router.get(
-
-  "/dashboard",
-
-  protect,
-
-  getDashboardData
-
-);
 
 // ===============================
-// GET ALL USERS
+// USERS
 // ===============================
+router.get("/users", protect, getAllUsers);
 
-router.get(
-
-  "/users",
-
-  protect,
-
-  getAllUsers
-
-);
 
 // ===============================
-// GET PENDING VENDORS
+// VENDORS
 // ===============================
 
-router.get(
+// all vendors (optional use if needed)
+router.get("/vendors", protect, (req, res) => {
+  res.json({ message: "Use pending/approved APIs" });
+});
 
-  "/pending-vendors",
+// pending vendors
+router.get("/vendors/pending", protect, getPendingVendors);
 
-  protect,
+// approved vendors
+router.get("/vendors/approved", protect, getApprovedVendors);
 
-  getPendingVendors
+// approve vendor
+router.put("/vendor/approve/:id", protect, approveVendor);
 
-);
+// reject vendor
+router.put("/vendor/reject/:id", protect, rejectVendor);
+
 
 // ===============================
-// GET ALL ORDERS
+// ORDERS
 // ===============================
+router.get("/orders", protect, getAllOrders);
 
-router.get(
-
-  "/orders",
-
-  protect,
-
-  getAllOrders
-
-);
 
 // ===============================
-// GET ALL WALLETS
+// WALLETS
 // ===============================
+router.get("/wallets", protect, getAllWallets);
 
-router.get(
-
-  "/wallets",
-
-  protect,
-
-  getAllWallets
-
-);
 
 // ===============================
-// APPROVE VENDOR
+// ADMIN MESSAGE
 // ===============================
+router.post("/send-message", protect, sendAdminMessage);
 
-router.put(
-
-  "/approve-vendor/:id",
-
-  protect,
-
-  approveVendor
-
-);
-
-
-
-router.get(
-
-  "/vendors",
-
-  protect,
-
-  getAllVendors
-
-);
-
-// ===============================
-// REJECT VENDOR
-// ===============================
-
-router.put(
-
-  "/reject-vendor/:id",
-
-  protect,
-
-  rejectVendor
-
-);
-
-// ===============================
-// SEND ADMIN MESSAGE
-// ===============================
-
-router.post(
-
-  "/send-message",
-
-  protect,
-
-  sendAdminMessage
-
-);
 
 module.exports = router;
