@@ -13,6 +13,8 @@ const {
 
   getAllUsers,
 
+  getAllVendors,
+
   getPendingVendors,
 
   getAllOrders,
@@ -116,6 +118,18 @@ router.put(
   protect,
 
   approveVendor
+
+);
+
+
+
+router.get(
+
+  "/vendors",
+
+  protect,
+
+  getAllVendors
 
 );
 

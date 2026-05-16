@@ -183,10 +183,42 @@ const getAllUsers = async (
   try {
 
     const users =
-        await User.find()
-            .select("-password");
+      await User.find({
+
+        role: "user",
+
+      }).select("-password");
 
     res.json(users);
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
+
+const getAllVendors = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const vendors =
+      await User.find({
+
+        role: "vendor",
+
+      }).select("-password");
+
+    res.json(vendors);
 
   } catch (error) {
 
@@ -519,6 +551,8 @@ module.exports = {
   getDashboardData,
 
   getAllUsers,
+
+  getAllVendors,
 
   getPendingVendors,
 
