@@ -21,21 +21,20 @@ router.post("/update-token", async (req, res) => {
     if (!userId || !fcmToken) {
       return res.status(400).json({
         success: false,
-        message: "Missing data",
+        message: "userId or fcmToken missing",
       });
     }
 
-    await User.findByIdAndUpdate(userId, { fcmToken });
+    await User.findByIdAndUpdate(userId, {
+      fcmToken: fcmToken,
+    });
 
-    return res.json({
+    res.json({
       success: true,
-      message: "Token saved",
+      message: "FCM token saved successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 

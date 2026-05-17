@@ -305,6 +305,8 @@ const approveVendor = async (req, res) => {
         message: "Vendor not found",
       });
     }
+    console.log("🔥 VENDOR TOKEN =>", vendor.fcmToken);
+
 
     // ======================
     // UPDATE STATUS
@@ -333,6 +335,8 @@ const approveVendor = async (req, res) => {
         title: "🎉 Vendor Approved",
         body: "Your canteen account has been approved by admin",
       });
+    } else {
+      console.log("❌ NO FCM TOKEN FOUND FOR VENDOR");
     }
 
     // ======================
