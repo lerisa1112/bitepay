@@ -5,13 +5,9 @@ const Notification = require("../models/Notification");
 
 const sendPushNotification = require("../utils/sendPushNotification");
 
-const sendVendorApprovalMail = require(
-  "../utils/sendVendorApprovalMail"
-);
+const sendVendorApprovalMail = require("../utils/sendVendorApprovalMail");
 
-const sendVendorRejectMail = require(
-  "../utils/sendVendorRejectMail"
-);
+const sendVendorRejectMail = require("../utils/sendVendorRejectMail");
 
 // ==========================
 // DASHBOARD DATA
