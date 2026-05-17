@@ -9,6 +9,8 @@ const sendVendorApprovalMail = require("../utils/sendVendorApprovalMail");
 
 const sendVendorRejectMail = require("../utils/sendVendorRejectMail");
 
+
+
 // ==========================
 // DASHBOARD DATA
 // ==========================
@@ -246,12 +248,7 @@ const getApprovedVendors =
 // ==========================
 // APPROVE VENDOR
 // ==========================
-const User = require("../models/User");
-const Notification = require("../models/Notification");
 
-const sendPushNotification = require("../utils/sendPushNotification");
-const sendVendorApprovalMail = require("../utils/sendVendorApprovalMail");
-const sendVendorRejectMail = require("../utils/sendVendorRejectMail");
 
 
 // ==========================
