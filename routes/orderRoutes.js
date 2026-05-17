@@ -7,7 +7,9 @@ const {
   getVendorOrders,
   acceptOrder,
   markOrderReady,
+  getOrdersByUser,
   completeOrder,
+  getWalletOrders,
 } = require("../controllers/orderController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -41,5 +43,10 @@ router.put("/ready/:id", protect, markOrderReady);
 // COMPLETE ORDER
 // ===============================
 router.put("/complete/:id", protect, completeOrder);
+
+router.get("/user/:userId", protect, getOrdersByUser);
+
+
+router.get("/wallet-orders", protect, getWalletOrders);
 
 module.exports = router;

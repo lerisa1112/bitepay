@@ -19,36 +19,32 @@ const placeOrder = async (req, res) => {
     // =========================
     // 1. WALLET CHECK
     // =========================
-    const wallet = await Wallet.findOne({ user: req.user._id });
+    const wallet = await Wallet.findOneAndUpdate(
+      {
+        user: req.user._id,
+        balance: { $gte: totalAmount }, // 🔥 important check
+      },
+      {
+        $inc: { balance: -totalAmount },
+        $push: {
+          transactions: {
+            type: "debit",
+            amount: totalAmount,
+            note: "Food Order Payment",
+            canteenName: vendor,
+            createdAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
 
     if (!wallet) {
-      return res.status(404).json({
-        success: false,
-        message: "Wallet not found",
-      });
-    }
-
-    if (wallet.balance < totalAmount) {
       return res.status(400).json({
         success: false,
         message: "Insufficient balance",
       });
     }
-
-    // =========================
-    // 2. DEBIT WALLET
-    // =========================
-    wallet.balance -= totalAmount;
-
-    wallet.transactions.push({
-      type: "debit",
-      amount: totalAmount,
-      note: "Food Order Payment",
-      canteenName: vendor,
-      createdAt: new Date(),
-    });
-
-    await wallet.save();
 
     // =========================
     // 3. CREATE ORDER
@@ -129,6 +125,54 @@ const placeOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: err.message,
+    });
+  }
+};
+
+
+const getWalletOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({
+      user: req.user._id,
+      paymentMethod: "Wallet",
+    })
+      .populate("vendor", "name canteenName")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      total: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+const getOrdersByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const orders = await Order.find({ user: userId })
+      .populate("vendor", "name canteenName")
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      total: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -316,4 +360,6 @@ module.exports = {
   acceptOrder,
   markOrderReady,
   completeOrder,
+  getOrdersByUser,
+  getWalletOrders
 };
