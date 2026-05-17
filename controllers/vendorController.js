@@ -199,12 +199,22 @@ const updateCanteenStatus = async (
 const getAllVendorsWithMenu = async (req, res) => {
   try {
 
-    // ONLY OPEN + APPROVED VENDORS
-    const vendors = await User.find({
+    const { status } = req.query;
+
+    let filter = {
       role: "vendor",
       isApproved: true,
-      isOpen: true,
-    }).select("-password");
+    };
+
+    if (status === "open") {
+      filter.isOpen = true;
+    }
+
+    if (status === "closed") {
+      filter.isOpen = false;
+    }
+
+    const vendors = await User.find(filter).select("-password");
 
     const result = await Promise.all(
       vendors.map(async (vendor) => {
@@ -215,7 +225,6 @@ const getAllVendorsWithMenu = async (req, res) => {
         });
 
         return {
-
           vendor: {
             _id: vendor._id,
             name: vendor.name,
@@ -227,9 +236,7 @@ const getAllVendorsWithMenu = async (req, res) => {
             isApproved: vendor.isApproved,
             isOpen: vendor.isOpen,
           },
-
           menuItems: menu,
-
         };
       })
     );
@@ -241,12 +248,10 @@ const getAllVendorsWithMenu = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 // ===============================
