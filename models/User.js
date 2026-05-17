@@ -2,7 +2,9 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    // ======================
     // BASIC INFO
+    // ======================
     name: {
       type: String,
       required: true,
@@ -20,6 +22,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false, // 🔥 auto-hide password
     },
 
     phone: {
@@ -27,23 +30,26 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ======================
     // ROLE
+    // ======================
     role: {
       type: String,
       enum: ["user", "vendor", "admin"],
       default: "user",
     },
 
-
+    // ======================
+    // FCM TOKEN
+    // ======================
     fcmToken: {
       type: String,
       default: null,
     },
 
-    // =========================
+    // ======================
     // VENDOR DETAILS
-    // =========================
-
+    // ======================
     canteenName: {
       type: String,
       default: "",
@@ -71,11 +77,7 @@ const userSchema = new mongoose.Schema(
 
     vendorStatus: {
       type: String,
-      enum: [
-        "Pending Review",
-        "Approved",
-        "Rejected",
-      ],
+      enum: ["Pending Review", "Approved", "Rejected"],
       default: "Pending Review",
     },
 
@@ -89,7 +91,9 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
-    // RESET PASSWORD TOKEN
+    // ======================
+    // RESET PASSWORD
+    // ======================
     resetToken: {
       type: String,
       default: "",
@@ -99,7 +103,9 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
 
+    // ======================
     // OTP RESET
+    // ======================
     resetOTP: {
       type: String,
       default: "",
@@ -114,7 +120,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "User",
-  userSchema
-);
+module.exports = mongoose.model("User", userSchema);

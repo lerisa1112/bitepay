@@ -250,208 +250,147 @@ const getApprovedVendors =
 // ==========================
 // APPROVE VENDOR
 // ==========================
-const approveVendor = async (
-  req,
-  res
-) => {
+const User = require("../models/User");
+const Notification = require("../models/Notification");
 
+const sendPushNotification = require("../utils/sendPushNotification");
+const sendVendorApprovalMail = require("../utils/sendVendorApprovalMail");
+const sendVendorRejectMail = require("../utils/sendVendorRejectMail");
+
+
+// ==========================
+// APPROVE VENDOR
+// ==========================
+const approveVendor = async (req, res) => {
   try {
+    const vendorId = req.params.id;
 
-    const vendor =
-        await User.findById(
-      req.params.id,
-    );
+    const vendor = await User.findById(vendorId);
 
     if (!vendor) {
-
       return res.status(404).json({
-        message:
-            "Vendor not found",
+        success: false,
+        message: "Vendor not found",
       });
-
     }
 
     // ======================
     // UPDATE STATUS
     // ======================
-
     vendor.isApproved = true;
-
-    vendor.vendorStatus =
-        "Approved";
+    vendor.vendorStatus = "Approved";
 
     await vendor.save();
 
     // ======================
-    // SAVE NOTIFICATION
+    // SAVE NOTIFICATION (DB)
     // ======================
-
     await Notification.create({
-
       user: vendor._id,
-
       title: "Vendor Approved",
-
-      message:
-          "Your vendor account has been approved by admin",
-
+      message: "Your vendor account has been approved by admin",
       type: "admin",
-
     });
 
     // ======================
-    // FCM PUSH
+    // PUSH NOTIFICATION (FCM)
     // ======================
-
     if (vendor.fcmToken) {
-
       await sendPushNotification({
-
         token: vendor.fcmToken,
-
-        title:
-            "Vendor Approved 🎉",
-
-        body:
-            "Your canteen account has been approved",
-
+        title: "🎉 Vendor Approved",
+        body: "Your canteen account has been approved by admin",
       });
-
     }
 
     // ======================
     // EMAIL
     // ======================
+    if (sendVendorApprovalMail) {
+      await sendVendorApprovalMail(vendor.email, vendor.name);
+    }
 
-    await sendVendorApprovalMail(
-
-      vendor.email,
-
-      vendor.name,
-
-    );
-
-    res.json({
-
+    return res.json({
       success: true,
-
-      message:
-          "Vendor approved successfully",
-
+      message: "Vendor approved successfully",
     });
 
   } catch (error) {
-
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
-
   }
-
 };
+
 
 // ==========================
 // REJECT VENDOR
 // ==========================
-const rejectVendor = async (
-  req,
-  res
-) => {
-
+const rejectVendor = async (req, res) => {
   try {
+    const vendorId = req.params.id;
 
-    const vendor =
-        await User.findById(
-      req.params.id,
-    );
+    const vendor = await User.findById(vendorId);
 
     if (!vendor) {
-
       return res.status(404).json({
-        message:
-            "Vendor not found",
+        success: false,
+        message: "Vendor not found",
       });
-
     }
 
     // ======================
     // UPDATE STATUS
     // ======================
-
     vendor.isApproved = false;
-
-    vendor.vendorStatus =
-        "Rejected";
+    vendor.vendorStatus = "Rejected";
 
     await vendor.save();
 
     // ======================
-    // SAVE NOTIFICATION
+    // SAVE NOTIFICATION (DB)
     // ======================
-
     await Notification.create({
-
       user: vendor._id,
-
       title: "Vendor Rejected",
-
-      message:
-          "Your vendor request was rejected by admin",
-
+      message: "Your vendor request was rejected by admin",
       type: "admin",
-
     });
 
     // ======================
-    // FCM PUSH
+    // PUSH NOTIFICATION (FCM)
     // ======================
-
     if (vendor.fcmToken) {
-
       await sendPushNotification({
-
         token: vendor.fcmToken,
-
-        title:
-            "Vendor Rejected ❌",
-
-        body:
-            "Your canteen request was rejected by admin",
-
+        title: "❌ Vendor Rejected",
+        body: "Your canteen request was rejected by admin",
       });
-
     }
 
     // ======================
     // EMAIL
     // ======================
+    if (sendVendorRejectMail) {
+      await sendVendorRejectMail(vendor.email, vendor.name);
+    }
 
-    await sendVendorRejectMail(
-
-      vendor.email,
-
-      vendor.name,
-
-    );
-
-    res.json({
-
+    return res.json({
       success: true,
-
-      message:
-          "Vendor rejected successfully",
-
+      message: "Vendor rejected successfully",
     });
 
   } catch (error) {
-
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
-
   }
-
 };
+
+
+
 
 // ==========================
 // ALL ORDERS

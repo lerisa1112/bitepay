@@ -3,18 +3,40 @@ const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
 const { getMyProfile } = require("../controllers/userController");
-const {
-  updateFcmToken,
-} = require("../controllers/userController");
 
+const User = require("../models/User");
+
+// ======================
 // GET PROFILE
+// ======================
 router.get("/me", protect, getMyProfile);
+
+// ======================
+// UPDATE FCM TOKEN
+// ======================
 router.post("/update-token", async (req, res) => {
-  const { userId, fcmToken } = req.body;
+  try {
+    const { userId, fcmToken } = req.body;
 
-  await User.findByIdAndUpdate(userId, { fcmToken });
+    if (!userId || !fcmToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing data",
+      });
+    }
 
-  res.json({ success: true });
+    await User.findByIdAndUpdate(userId, { fcmToken });
+
+    return res.json({
+      success: true,
+      message: "Token saved",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 });
 
 module.exports = router;

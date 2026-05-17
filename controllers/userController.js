@@ -1,8 +1,8 @@
 const User = require("../models/User");
 
-// ===============================
-// GET USER PROFILE
-// ===============================
+// ==============================
+// GET PROFILE
+// ==============================
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
@@ -14,40 +14,36 @@ const getMyProfile = async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       user,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-
+// ==============================
+// UPDATE FCM TOKEN
+// ==============================
 const updateFcmToken = async (req, res) => {
   try {
-    const { userId, fcmToken } = req.body;
+    const userId = req.user._id;
+    const { fcmToken } = req.body;
 
-    if (!userId || !fcmToken) {
-      return res.status(400).json({
-        message: "userId and fcmToken required",
-      });
-    }
-
-    await User.findByIdAndUpdate(userId, {
-      fcmToken: fcmToken,
-    });
+    await User.findByIdAndUpdate(userId, { fcmToken });
 
     res.json({
       success: true,
-      message: "FCM token updated",
+      message: "Token updated",
     });
 
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: err.message,
     });
   }
