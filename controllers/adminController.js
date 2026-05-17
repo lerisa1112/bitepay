@@ -99,6 +99,45 @@ const getDashboardData = async (
 
 };
 
+
+const testFCM = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "FCM token required",
+      });
+    }
+
+    const response = await admin.messaging().send({
+      token,
+      notification: {
+        title: "🔥 Test Notification",
+        body: "Postman thi test success",
+      },
+    });
+
+    console.log("FCM SENT =>", response);
+
+    res.json({
+      success: true,
+      message: "Notification sent",
+      response,
+    });
+
+  } catch (error) {
+    console.log("FCM ERROR =>", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
 // ==========================
 // USERS
 // ==========================
@@ -544,5 +583,7 @@ module.exports = {
   getAllWallets,
 
   sendAdminMessage,
+
+  testFCM,
 
 };

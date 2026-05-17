@@ -1,10 +1,11 @@
-const express = require("express");
 const dotenv = require("dotenv");
+const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
 const connectDB = require("./config/db");
+const testRoute = require("./routes/test");
 
 // ===============================
 // LOAD ENV
@@ -89,6 +90,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/test", testRoute);
 // ===============================
 // ERROR HANDLER
 // ===============================

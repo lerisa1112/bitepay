@@ -11,7 +11,9 @@ const {
   rejectVendor,
   getAllOrders,
   getAllWallets,
+  
   sendAdminMessage,
+  testFCM,
 } = require("../controllers/adminController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -65,6 +67,8 @@ router.get("/wallets", protect, getAllWallets);
 // ADMIN MESSAGE
 // ===============================
 router.post("/send-message", protect, sendAdminMessage);
+
+router.post("/test-fcm", protect, testFCM);
 
 
 module.exports = router;
