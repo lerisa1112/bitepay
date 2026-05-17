@@ -9,7 +9,12 @@ const {
 
 // GET PROFILE
 router.get("/me", protect, getMyProfile);
-router.post("/update-token", protect, updateFcmToken);
+router.post("/update-token", async (req, res) => {
+  const { userId, fcmToken } = req.body;
 
+  await User.findByIdAndUpdate(userId, { fcmToken });
+
+  res.json({ success: true });
+});
 
 module.exports = router;
