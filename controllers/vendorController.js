@@ -198,15 +198,24 @@ const updateCanteenStatus = async (
 
 const getAllVendorsWithMenu = async (req, res) => {
   try {
-    // 1. all vendors
-    const vendors = await User.find({ role: "vendor" }).select("-password");
 
-    // 2. loop and attach menu
+    // ONLY OPEN + APPROVED VENDORS
+    const vendors = await User.find({
+      role: "vendor",
+      isApproved: true,
+      isOpen: true,
+    }).select("-password");
+
     const result = await Promise.all(
       vendors.map(async (vendor) => {
-        const menu = await Menu.find({ vendor: vendor._id });
+
+        const menu = await Menu.find({
+          vendor: vendor._id,
+          stockStatus: "In Stock",
+        });
 
         return {
+
           vendor: {
             _id: vendor._id,
             name: vendor.name,
@@ -216,8 +225,11 @@ const getAllVendorsWithMenu = async (req, res) => {
             phone: vendor.phone,
             vendorStatus: vendor.vendorStatus,
             isApproved: vendor.isApproved,
+            isOpen: vendor.isOpen,
           },
+
           menuItems: menu,
+
         };
       })
     );
@@ -229,14 +241,14 @@ const getAllVendorsWithMenu = async (req, res) => {
     });
 
   } catch (error) {
+
     res.status(500).json({
       success: false,
       message: error.message,
     });
+
   }
 };
-
-
 // ===============================
 // ADD MENU ITEM
 // ===============================

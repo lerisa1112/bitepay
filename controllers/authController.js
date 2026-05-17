@@ -9,6 +9,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/mailer");
+const sendNotification =
+require("../utils/sendNotification");
 
 // =======================
 // GENERATE JWT TOKEN
@@ -219,6 +221,27 @@ const loginUser = async (req, res) => {
   }
 };
 
+
+const saveFcmToken = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { fcmToken: req.body.fcmToken },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
 // =======================
 // OTHER FUNCTIONS SAME (UNCHANGED)
 // =======================
@@ -241,4 +264,5 @@ module.exports = {
   sendOTP,
   verifyOTP,
   deleteAccount,
+  saveFcmToken,
 };

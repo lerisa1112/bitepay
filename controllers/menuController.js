@@ -116,7 +116,7 @@ const updateStockStatus = async (req, res) => {
       });
     }
 
-    menu.stockStatus = stockStatus;
+    menu.stockStatus = stockStatus; // "In Stock" | "Out Of Stock"
     await menu.save();
 
     res.json({
@@ -124,6 +124,7 @@ const updateStockStatus = async (req, res) => {
       message: "Stock updated successfully",
       menu,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

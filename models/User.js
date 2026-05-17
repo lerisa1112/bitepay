@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+
+    fcmToken: {
+      type: String,
+      default: "",
+    },
+
     // =========================
     // VENDOR DETAILS
     // =========================
@@ -76,6 +82,11 @@ const userSchema = new mongoose.Schema(
     isApproved: {
       type: Boolean,
       default: false,
+    },
+
+    isOpen: {
+      type: Boolean,
+      default: true,
     },
 
     // RESET PASSWORD TOKEN

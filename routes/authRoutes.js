@@ -10,6 +10,7 @@ const {
   sendOTP,
   verifyOTP,
   deleteAccount,
+  saveFcmToken,
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -30,5 +31,11 @@ router.post("/verify-otp", verifyOTP);
 
 // delete
 router.delete("/delete", protect, deleteAccount);
+
+router.post(
+  "/save-fcm-token",
+  protect,
+  saveFcmToken,
+);
 
 module.exports = router;
