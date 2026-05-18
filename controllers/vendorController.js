@@ -123,10 +123,7 @@ const updateCanteenInfo = async (
 // UPDATE CANTEEN STATUS
 // ===============================
 
-const updateCanteenStatus = async (
-  req,
-  res
-) => {
+const updateCanteenStatus = async (req, res) => {
 
   try {
 
@@ -141,16 +138,13 @@ const updateCanteenStatus = async (
 
         success: false,
 
-        message:
-          "Status must be Open or Closed",
+        message: "Status must be Open or Closed",
 
       });
 
     }
 
-    const vendor = await User.findById(
-      req.user._id
-    );
+    const vendor = await User.findById(req.user._id);
 
     if (!vendor) {
 
@@ -164,20 +158,35 @@ const updateCanteenStatus = async (
 
     }
 
-    vendor.canteenStatus =
-      canteenStatus;
+    // UPDATE STATUS
+    vendor.canteenStatus = canteenStatus;
+
+    vendor.isOpen = canteenStatus === "Open";
 
     await vendor.save();
+
+    // SOCKET 🔥
+    const io = req.app.get("io");
+
+    io.emit("vendorStatusChanged", {
+
+      vendorId: vendor._id,
+
+      isOpen: vendor.isOpen,
+
+      canteenStatus: vendor.canteenStatus
+
+    });
 
     res.json({
 
       success: true,
 
-      message:
-        `Canteen is now ${canteenStatus}`,
+      message: `Canteen is now ${canteenStatus}`,
 
-      canteenStatus:
-        vendor.canteenStatus,
+      canteenStatus: vendor.canteenStatus,
+
+      isOpen: vendor.isOpen
 
     });
 
@@ -197,62 +206,98 @@ const updateCanteenStatus = async (
 
 
 const getAllVendorsWithMenu = async (req, res) => {
+
   try {
 
     const { status } = req.query;
 
     let filter = {
+
       role: "vendor",
+
       isApproved: true,
+
+      // IMPORTANT 🔥
+      isOpen: true
+
     };
 
-    if (status === "open") {
-      filter.isOpen = true;
-    }
-
+    // OPTIONAL
     if (status === "closed") {
+
       filter.isOpen = false;
+
     }
 
-    const vendors = await User.find(filter).select("-password");
+    const vendors = await User.find(filter)
+      .select("-password");
 
     const result = await Promise.all(
+
       vendors.map(async (vendor) => {
 
         const menu = await Menu.find({
+
           vendor: vendor._id,
+
           stockStatus: "In Stock",
+
         });
 
         return {
+
           vendor: {
+
             _id: vendor._id,
+
             name: vendor.name,
+
             canteenName: vendor.canteenName,
+
             canteenLocation: vendor.canteenLocation,
+
             address: vendor.address,
+
             phone: vendor.phone,
+
             vendorStatus: vendor.vendorStatus,
+
             isApproved: vendor.isApproved,
+
             isOpen: vendor.isOpen,
+
           },
+
           menuItems: menu,
+
         };
+
       })
+
     );
 
     res.json({
+
       success: true,
+
       totalVendors: result.length,
+
       data: result,
+
     });
 
   } catch (error) {
+
     res.status(500).json({
+
       success: false,
+
       message: error.message,
+
     });
+
   }
+
 };
 // ===============================
 // ADD MENU ITEM
